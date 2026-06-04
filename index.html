@@ -1,389 +1,524 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To: My Girl</title>
+    <title>To: 小荷</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600&display=swap"
+        rel="stylesheet">
     <style>
-        body {
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            overflow-x: hidden;
+        * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        #editor {
-            width: 100%;
-            max-width: 800px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.8;
-            font-size: 16px;
-            padding-bottom: 100px;
-            display: none;
+        body {
+            background-color: #18110e;
+            color: #e0d4c4;
+            font-family: 'Ma Shan Zheng', 'Noto Serif SC', serif;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        @media screen and (max-width: 600px) {
-            body { padding: 15px; }
-            #editor { font-size: 15px; line-height: 1.6; }
-            .binary-block { font-size: 12px; }
+        /* ── 台灯光晕 ── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 500px;
+            background: radial-gradient(ellipse at center, rgba(210, 145, 70, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .comment { color: #6a9955; font-style: italic; }
-        .string { color: #ce9178; }
-        .keyword { color: #c586c0; font-weight: bold; }
-        .number { color: #b5cea8; }
-        .variable { color: #9cdcfe; }
-
-        .sun { color: #ffd700; text-shadow: 0 0 8px #ffd700; font-weight: bold; }
-        .light { color: #fff; text-shadow: 0 0 10px #fff, 0 0 20px #fff; }
-        .dull { color: #808080; }
-        .passion { color: #ff9f43; font-weight: bold; }
-        .memory { color: #ff6b81; border-bottom: 1px dashed #ff6b81; }
-        .promise { color: #7bed9f; font-weight: bold; border: 1px solid #7bed9f; padding: 2px 5px; border-radius: 4px; }
-
-        .red { 
-            color: #ff6b81; 
+        /* ── 开始画面 ── */
+        #start-screen {
+            position: fixed;
+            inset: 0;
+            background-color: #18110e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1.2s ease-out;
+            gap: 28px;
         }
 
-        .danger { 
-            display: inline-block;
-            background-color: #fa5151;
-            color: #ffffff;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-weight: bold; 
-            font-size: 0.9em;
-            box-shadow: 0 4px 10px rgba(250, 81, 81, 0.3);
-            vertical-align: middle;
-            margin: 0 4px;
-            animation: pulse 2s infinite;
-            cursor: not-allowed;
-        }
-        .danger::before {
-            content: '✆ ';
-            font-size: 1.1em;
-            margin-right: 4px;
-            display: inline-block;
-            transform: rotate(135deg);
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 81, 81, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(250, 81, 81, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 81, 81, 0); }
+        #start-screen .subtitle {
+            color: #7a6a58;
+            font-size: 14px;
+            letter-spacing: 2px;
+            font-family: 'Noto Serif SC', serif;
         }
 
-        .binary-block {
-            margin-top: 20px;
-            color: #569cd6;
-            font-family: 'Courier New', monospace;
-            border-left: 3px solid #569cd6;
-            padding-left: 10px;
-            display: inline-block;
+        #start-btn {
+            padding: 14px 48px;
+            font-size: 20px;
+            font-family: 'Ma Shan Zheng', serif;
+            background: transparent;
+            color: #c8975a;
+            border: 1px solid #c8975a;
+            border-radius: 2px;
+            cursor: pointer;
+            letter-spacing: 4px;
+            transition: all 0.4s;
+            animation: glow-pulse 2.5s ease-in-out infinite;
+            position: relative;
         }
 
-        .decoded {
-            background-color: #569cd6;
-            color: #1e1e1e;
-            font-weight: bold;
-            padding: 2px 5px;
-            margin-left: 10px;
-            opacity: 0;
-            transition: opacity 1s;
+        #start-btn::before,
+        #start-btn::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border: 1px solid rgba(200, 151, 90, 0.2);
+            border-radius: 2px;
+            animation: glow-pulse 2.5s ease-in-out infinite reverse;
         }
 
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 18px;
-            background-color: #d4d4d4;
-            animation: blink 1s step-end infinite;
-            vertical-align: middle;
-            margin-left: 2px;
+        #start-btn:hover {
+            background: rgba(200, 151, 90, 0.12);
+            box-shadow: 0 0 30px rgba(200, 151, 90, 0.25);
         }
-        @keyframes blink { 50% { opacity: 0; } }
 
+        @keyframes glow-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(200, 151, 90, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 22px rgba(200, 151, 90, 0.6);
+            }
+        }
+
+        /* ── 音乐控制 ── */
         #music-control {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.1);
+            top: 22px;
+            right: 22px;
+            width: 38px;
+            height: 38px;
+            background: rgba(200, 151, 90, 0.08);
+            border: 1px solid rgba(200, 151, 90, 0.25);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.2);
             opacity: 0;
-            transition: opacity 1s;
+            transition: opacity 0.8s, background 0.3s;
+            font-size: 16px;
         }
-        
-        .spin { animation: spin 3s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        #music-icon { font-size: 20px; }
 
-        #start-screen {
-            position: fixed;
+        #music-control:hover {
+            background: rgba(200, 151, 90, 0.18);
+        }
+
+        .spin {
+            animation: spin 4s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── 信纸主体 ── */
+        #letter-wrap {
+            display: none;
+            position: relative;
+            z-index: 1;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 60px 40px 140px;
+        }
+
+        /* 信纸左侧竖线装饰 */
+        #letter-wrap::before {
+            content: '';
+            position: absolute;
             top: 0;
-            left: 0;
-            width: 100%;
+            left: 68px;
+            width: 1px;
             height: 100%;
-            background-color: #1e1e1e;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 1s ease-out;
+            background: linear-gradient(to bottom, transparent, rgba(180, 120, 60, 0.15) 10%, rgba(180, 120, 60, 0.15) 90%, transparent);
+            pointer-events: none;
         }
 
-        #start-btn {
-            padding: 15px 40px;
+        /* ── 称呼 ── */
+        .salutation {
+            font-size: 24px;
+            color: #c8975a;
+            margin-bottom: 36px;
+            opacity: 0;
+            letter-spacing: 2px;
+        }
+
+        /* ── 段落 ── */
+        .para {
             font-size: 20px;
-            background-color: transparent;
-            color: #c586c0;
-            border: 2px solid #c586c0;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.3s;
-            animation: pulse-border 2s infinite;
+            line-height: 2.2;
+            color: #d6c9b6;
+            margin-bottom: 32px;
+            text-indent: 2em;
+            opacity: 0;
         }
 
-        #start-btn:hover {
-            background-color: #c586c0;
-            color: #1e1e1e;
+        /* 高亮：承诺 */
+        .promise {
+            color: #d4a96a;
+            border-bottom: 1px solid rgba(212, 169, 106, 0.5);
+            padding-bottom: 1px;
         }
 
-        @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(197, 134, 192, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(197, 134, 192, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(197, 134, 192, 0); }
+        /* 高亮：愧疚 */
+        .regret {
+            color: #b8a898;
+            opacity: 0.85;
         }
-        
-        .start-hint {
+
+        /* 高亮：她的付出（温暖橙）*/
+        .her {
+            color: #e0a060;
+            font-style: normal;
+        }
+
+        /* 高亮：强调 */
+        .emph {
+            color: #c8975a;
+        }
+
+        /* ── 署名 ── */
+        .signature {
+            font-size: 16px;
+            color: #8a7a68;
+            text-align: right;
+            margin-top: 12px;
+            line-height: 2;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.9s ease, transform 0.9s ease;
+        }
+
+        /* ── 结尾表白 ── */
+        .confession {
+            font-size: 24px;
+            color: #c8975a;
+            text-align: center;
+            margin: 48px 0 12px;
+            letter-spacing: 3px;
+            opacity: 0;
+            text-shadow: 0 0 20px rgba(200, 151, 90, 0.4);
+        }
+
+        /* ── 分割线 ── */
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(200, 151, 90, 0.4), transparent);
+            margin: 36px auto;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        /* ── 跳转链接 ── */
+        #nav-link {
+            display: block;
+            text-align: center;
             margin-top: 20px;
-            color: #808080;
-            font-size: 14px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 1s ease, transform 1s ease;
         }
 
+        #nav-link a {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 14px;
+            color: #7a6a58;
+            text-decoration: none;
+            letter-spacing: 2px;
+            border-bottom: 1px dashed rgba(122, 106, 88, 0.4);
+            padding-bottom: 2px;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        #nav-link a:hover {
+            color: #c8975a;
+            border-color: rgba(200, 151, 90, 0.5);
+        }
+
+        /* 出现动画工具类 */
+        .visible {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        /* ── 手写字符浮现动画 ── */
+        @keyframes charIn {
+            from {
+                opacity: 0;
+                filter: blur(4px);
+                transform: translateY(2px);
+            }
+
+            to {
+                opacity: 1;
+                filter: blur(0);
+                transform: translateY(0);
+            }
+        }
+
+        .ch {
+            display: inline;
+            animation: charIn 0.3s ease forwards;
+        }
+
+        /* ── 响应式 ── */
+        @media (max-width: 600px) {
+            #letter-wrap {
+                padding: 40px 24px 120px;
+            }
+
+            #letter-wrap::before {
+                left: 40px;
+            }
+
+            .para {
+                font-size: 19px;
+                line-height: 2;
+            }
+
+            .salutation {
+                font-size: 22px;
+            }
+
+            .confession {
+                font-size: 22px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <audio id="bgm" loop>
-        <source src="bgm.mp3" type="audio/mpeg">
+        <source src="bgm2.mp3" type="audio/mpeg">
     </audio>
 
+    <!-- 开始画面 -->
     <div id="start-screen">
+        <div class="subtitle">2026.6.4</div>
         <button id="start-btn">To: 亲爱的小荷</button>
-        <div class="start-hint">戴上耳机，体验更佳</div>
+        <div class="subtitle">戴上耳机，体验更佳</div>
     </div>
 
-    <div id="music-control">
+    <!-- 音乐控制 -->
+    <div id="music-control" id="music-btn">
         <span id="music-icon">🎵</span>
     </div>
 
-    <div id="editor"></div>
+    <!-- 信纸 -->
+    <div id="letter-wrap">
+
+        <div class="salutation" id="el-0">小荷，</div>
+
+        <p class="para" id="el-1">
+            这是一封迟到了的信，原本有想过在上周写给你，不过原谅我有些小性子，当时感觉你好像不太重视，就赌气不写了（对手指）。原本应该就没有这封信了，但是感觉好像对于那天晚上，你比较受伤，思来想去还是应该开始这封信。
+        </p>
+
+        <p class="para" id="el-2">
+            首先就是针对直接原因叭，你说你感到了一些落差，很抱歉，可能在行动上，我最近做的没那么好，但是我希望你能够相信，我扪心自问，相比于一年前，<span
+                class="emph">你在我心里分量远远超过当时。我可以非常确信的说出这句话。非常确信。</span>当时更多的是一种憧憬，希望我们能够携手一起走向未来。现在变成了一种坚定。
+        </p>
+
+        <p class="para" id="el-3">
+            我承认过程中产生过隐隐的怀疑，或者我更觉得是一种害怕，从那天你对于来南京非常抵触开始。那时候的我没有想到我们的未来对于你是那么那么大的压力，我低估了那样的压力。我害怕我们看起来这么契合，但你实际上没有我想的那么那么好，我害怕我把一切给你，但最后发现你更多的只是因为享受在一起的陪伴和关心。虽然一般白天里他不会出现，但偶尔的夜晚，我就会想要试图让你证明，你对我的偏爱，证明我没认错人。所以我就变成了那个像靠"作"来确认在意的人。当然我没有怀疑过你的爱意，可能更多的是害怕你是否像个小孩把一切当成理所应当，当我做的不再持续给你惊喜，不再让你感受到更新更多的偏爱和包容后，你是否会怀疑我不再爱了，但是到达100%之后，就再也没有更进一步的偏爱了。我害怕的是未来，而不是包容不下去了，未来没有那么多的再创新高了。对于现在的相处，我没有感受到有多少负担，我愿意去做，只是害怕如果你当成了理所应当，那未来我要怎么办才能让你感受到我的在意。
+        </p>
+
+        <p class="para" id="el-4">
+            让你规划一周年，也是那天我困在自己的想法里，感觉有些心累，所以不想再操心了，当一次大爷，同时也有点我的小心思，想着这样是否能够让你知道，这不是那么简单和理所应当的。这点确实是我的错，有什么问题应该开诚布公的谈，而不是单方面的像出题一样，我知道错了。然后那天晚上，我为了自己的一点小委屈，想要多些来自你在意的证据，为了让自己显得正当点，临时想了一个个论据，陷入到谁对谁错的较量中，伤了你的心。其实我也没有你想象中的那么不动情绪，一生气就是很严重，可能那是对于其他事我不太在意吧，可能在亲密关系中，我就像个小孩一样渴望得到偏爱和肯定，也像小孩一样有着小性子和小脾气，虽然我好像不太愿意承认。所以那天晚上我像撒泼的小孩，只顾着为了自己，没有想过说出的话有多么伤人。<span
+                class="promise">我在这向你承诺，我之后再也不会拿之前过去的事情来说事了</span>（一周以外，有些事可能当下不是沟通的好时候，还是得留些余量（对手指）），过去的事就已经是过去的事了，如果还有下次你可以想想有什么惩罚我的，任你差遣🫡。
+        </p>
+
+        <p class="para" id="el-5">
+            还有对于那天晚上说的话，都是我没太过脑子，努力想的什么我做了你没做的事情，看到第二天晚上你一条一条的回复，说你的付出，说你的解释让我感受到你的在意。<span
+                class="regret">我看到真的好愧疚好愧疚。</span>你记得每一句话，告诉我别伤心，而我说的时候却没有考虑你，只顾着自己的宣泄，没有想过你时不时掏出来的<span
+                class="her">棒棒糖，巧克力，或是雪地里的名字</span>，你对我时时刻刻的在意。
+        </p>
+
+        <p class="para" id="el-6">
+            关于仪式感，那天晚上更多的是因为时间比较近，我好拿来作为论据吧。其实我一开始是一个没什么仪式感的人，是你让我感知到了仪式感的意义，你在重要的节点给我营造的仪式感，让我感到很幸福很快乐，我就也想要让你感受到这种幸福和重视，告诉你你是被在意着的。虽然我不爱网上购物挑东西，但是在给你选礼物的时候我却没有那种繁燥，想的都是你收到这个会有什么反应，收到那个会有什么反应，它不是我的枷锁，反而我会害怕成为你的负担，你要相信，我为你做的，送的小礼物，都是我希望你能够有的，而不是你一收到礼物，就要想着我要怎么回馈。诶呀每次都跟你说不通，还记着什么你送了我没送，什么都要对等，我就不喜欢对等！我享受为你付出的感觉，只要你不是觉得理所应当。对于礼物，我希望的是看到什么，觉得对方可能会需要，就买了，因为我们视角不同，你不会想到要高速吹风机，我不会想到还要有睡衣。而不是你给我买一个，我给你买一个。而是在平常的时候，看到这个你应该需要，就买了。
+        </p>
+
+        <p class="para" id="el-7">
+            对于小蛋糕，确实对于吃来说，我觉得有也还行，没有也不会想吃，但是我知道，它对你来说是一种仪式感的象征，所以那天看到你对小蛋糕不耐烦，感到有些伤心了吧，当时我还没有察觉到你为了未来背负了那么大的压力，还只当是备考的压力，然而我却还在拖你的后腿。<span
+                class="promise">未来是我们两个人的事，我们一起承担好吗。</span>
+        </p>
+
+        <p class="para" id="el-8">
+            说了这么多乱七八糟的，就当是我的辩解吧，很抱歉因为我让你这么伤心，言语没有太多分量，后面的时间，<span class="emph">我要让你知道，你没有选错人。</span>
+        </p>
+
+        <div class="divider" id="el-div"></div>
+
+        <p class="confession" id="el-confession">
+            因为这是公开的，所以就——小荷，我爱你。
+        </p>
+
+        <div class="signature" id="el-sign">
+            2026.6.4<br>
+            🦐 虾米
+        </div>
+
+        <div id="nav-link">
+            <a href="love_letter.html">「还记得那封告白吗？」</a>
+        </div>
+
+    </div>
 
     <script>
-        const content = [
-            { text: "To 小荷：\n\n", class: "keyword" },
-            { text: "// 思考了好久，一直不知道该如下笔。\n", class: "comment" },
-            { text: "// 用惯了AI，我已经好久好久没有自己写过东西了。\n\n", class: "comment" },
-            
-            { text: "想起来我们的相识，两个对感情如此保守的人，竟然是因为", class: "" },
-            { text: "“网络”", class: "string" },
-            { text: "将我们平行的生活交织在一起。也许，这就叫", class: "" },
-            { text: "缘分", class: "keyword" },
-            { text: "吗？\n从相知，到相识，再到相爱，我们已经一起走过了", class: "" },
-            { text: "400多天", class: "number" },
-            { text: "，我们一起从陌生变得熟悉。\n这", class: "" },
-            { text: "400多天", class: "number" },
-            { text: "，我们竟没有过冲突和争执，有时我都在怀疑，是我们太过契合还是你太过包容。\n你总是像", class: "" },
-            { text: "小太阳", class: "sun" },
-            { text: "一样，想温暖身边所有的人，但是别忘了，", class: "" },
-            { text: "自己才是人生中的第一位，要学着自私一点", class: "keyword" },
-            { text: "。\n\n", class: "" },
-
-            { text: "你说，要", class: "" },
-            { text: "“从一段告白和一束鲜花开始”", class: "string" },
-            { text: "。那么，现在就是迟来的告白。\n不知道你还记不记得，", class: "" },
-            { text: "“你的出现就像一束光照进了我的生活”", class: "light" },
-            { text: "，我说过类似的话。\n遇见你之前，我就重复着", class: "" },
-            { text: "两点一线或者是三点一线的生活", class: "dull" },
-            { text: "，好像也不觉得有什么问题。\n随着开始实习，开始闲下来之后，突然觉得有些空虚，下班的时间每天就是在床上摊着，或者局限在十平米的房间，之前买的油盐酱醋没用几次就不了了之，仿佛丧失了对生活的热情，", class: "dull" },
-            { text: "直到我遇见了你", class: "variable" },
-            { text: "。\n那是我第一次见到了这样的说话方式和语气，聊天不再是平淡的交换信息，而是充满了", class: "" },
-            { text: "热情", class: "passion" },
-            { text: "和", class: "" },
-            { text: "活力", class: "passion" },
-            { text: "。\n随着一段时间的熟悉，我渐渐开始期待着手机的震动，那是不是你的消息。\n再然后开始留意身边的大事小事，想办法突破一下单调的生活，来得到和你聊天的契机。\n随着聊天的深入，发现了和你有如此多相似的意见，相契合的想法，接着就是更深入的接触，就是", class: "" },
-            { text: "公交站牌边的第一次牵手", class: "memory" },
-            { text: "，就是", class: "" },
-            { text: "停电时扑通扑通的拥抱", class: "memory" },
-            { text: "，就是", class: "" },
-            { text: "海边礁石上的第一次吻", class: "memory" },
-            { text: "。\n你的出现，让我的生活有了期待，有了色彩，让我知道世界上还有一个和我息息相关的人。\n曾经的我无法想象，每天只有二十四小时，还要抽出一小时做一些看似无意义的事情，但是到如今为止的", class: "" },
-            { text: "200多天", class: "number" },
-            { text: "，我每次都不想先点那个", class: "" },
-            { text: "红色的按钮", class: "red" },
-            { text: "", class: "danger" }, 
-            { text: "。\n\n", class: "" },
-
-            { text: "你说", class: "" },
-            { text: "100天", class: "number" },
-            { text: "太慢，我说", class: "" },
-            { text: "200天", class: "number" },
-            { text: "太快，快到再有", class: "" },
-            { text: "200天", class: "number" },
-            { text: "你就要因为一个曾经的陌生人而改变一生的轨迹。\n对于未来的不确定性总是让人焦虑，我也不知道你究竟要鼓起多大的勇气才能来做这个决定，但是你记得吗，你说要跟一个本身就很好的人谈恋爱，我相信", class: "" },
-            { text: "我就是那个本身就很好的人", class: "variable" },
-            { text: "，也希望你能够相信。\n虽然嘴上的承诺很简单，但是我也没法给你足够的保证，不过无论遇到什么问题，", class: "" },
-            { text: "别急，还有我在", class: "promise" },
-            { text: "。这次的别急不是坏事了吧。\n\n", class: "" },
-
-            { text: "不知不觉就写了这么多了，你说，写多了就不显得重视了，那我到这就不写啦，因为，", class: "" },
-            { text: "在可预见的将来，你一直是我最重视的那个人。", class: "keyword" },
-            { text: "\n\n", class: "" },
-
-            { text: "01001001 00100000 01101100 01101111 01110110 01100101 00100000 01111001 01101111 01110101 00101100 00100000 01001000", class: "binary-block" }
-        ];
-
-        const signature = [
-            { text: "\n\n", class: "" },
-            { text: "2026.1.23\n", class: "number" },
-            { text: "🦐 虾米", class: "string" }
-        ];
-
-        const editor = document.getElementById('editor');
-        const cursor = document.createElement('span');
-        cursor.className = 'cursor';
-        
-        let blockIndex = 0;
-        let charIndex = 0;
-        let currentSpan = null;
-
-        function typeWriter() {
-            if (blockIndex < content.length) {
-                const block = content[blockIndex];
-                
-                if (!currentSpan) {
-                    currentSpan = document.createElement('span');
-                    currentSpan.className = block.class;
-                    editor.insertBefore(currentSpan, cursor);
-                }
-
-                if (charIndex < block.text.length) {
-                    currentSpan.textContent += block.text.charAt(charIndex);
-                    charIndex++;
-                    
-                    let delay = Math.random() * 30 + 20; 
-                    const char = block.text.charAt(charIndex - 1);
-                    if (char === '，') delay += 100;
-                    if (char === '。' || char === '\n') delay += 200;
-                    
-                    setTimeout(typeWriter, delay);
-                    window.scrollTo(0, document.body.scrollHeight);
-                } else {
-                    blockIndex++;
-                    charIndex = 0;
-                    currentSpan = null;
-                    setTimeout(typeWriter, 50);
-                }
-            } else {
-                decodeBinary();
-            }
-        }
-
-        function decodeBinary() {
-            const binaryElements = document.getElementsByClassName('binary-block');
-            if (binaryElements.length > 0) {
-                const binaryEl = binaryElements[0];
-                const decodedSpan = document.createElement('span');
-                decodedSpan.className = 'decoded';
-                decodedSpan.textContent = "=> I love you, H";
-                
-                if (binaryEl.nextSibling) {
-                    binaryEl.parentNode.insertBefore(decodedSpan, binaryEl.nextSibling);
-                } else {
-                    binaryEl.parentNode.appendChild(decodedSpan);
-                }
-                
-                setTimeout(() => {
-                    decodedSpan.style.opacity = 1;
-
-                    setTimeout(() => {
-                        startSignature();
-                    }, 500); 
-                    
-                }, 1500);
-            }
-        }
-
-        let sigBlockIndex = 0;
-        let sigCharIndex = 0;
-        let sigCurrentSpan = null;
-
-        function startSignature() {
-            if (sigBlockIndex < signature.length) {
-                const block = signature[sigBlockIndex];
-                
-                if (!sigCurrentSpan) {
-                    sigCurrentSpan = document.createElement('span');
-                    sigCurrentSpan.className = block.class;
-                    editor.insertBefore(sigCurrentSpan, cursor);
-                }
-
-                if (sigCharIndex < block.text.length) {
-                    sigCurrentSpan.textContent += block.text.charAt(sigCharIndex);
-                    sigCharIndex++;
-                    setTimeout(startSignature, 50);
-                    window.scrollTo(0, document.body.scrollHeight);
-                } else {
-                    sigBlockIndex++;
-                    sigCharIndex = 0;
-                    sigCurrentSpan = null;
-                    setTimeout(startSignature, 50);
-                }
-            }
-        }
-
-        const bgm = document.getElementById('bgm');
-        const musicBtn = document.getElementById('music-control');
-        const musicIcon = document.getElementById('music-icon');
         const startScreen = document.getElementById('start-screen');
         const startBtn = document.getElementById('start-btn');
+        const letterWrap = document.getElementById('letter-wrap');
+        const musicBtn = document.getElementById('music-control');
+        const musicIcon = document.getElementById('music-icon');
+        const bgm = document.getElementById('bgm');
+
         let isPlaying = false;
 
+        // ── 打字机核心：逐字浮现，保留 span 高亮 ──
+        // speed: ms/字，punc: 标点停顿倍数
+        function typewriterEffect(el, speed, onDone) {
+            // 解析原始内容为 [{ch, cls}] 序列
+            const segments = [];
+            el.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    for (const ch of node.textContent) {
+                        segments.push({ ch, cls: null });
+                    }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    const cls = node.className || null;
+                    for (const ch of node.textContent) {
+                        segments.push({ ch, cls });
+                    }
+                }
+            });
+
+            // 清空并设可见
+            el.innerHTML = '';
+            el.style.opacity = '1';
+
+            let i = 0;
+            let currentSpan = null;
+            let currentCls = undefined;
+
+            function tick() {
+                if (i >= segments.length) {
+                    if (onDone) onDone();
+                    return;
+                }
+                const { ch, cls } = segments[i++];
+
+                // 切换 span
+                if (cls !== currentCls) {
+                    if (cls) {
+                        currentSpan = document.createElement('span');
+                        currentSpan.className = cls;
+                        el.appendChild(currentSpan);
+                    } else {
+                        currentSpan = null;
+                    }
+                    currentCls = cls;
+                }
+
+                // 每个字用 span.ch 包裹，触发手写浮现动画
+                const chSpan = document.createElement('span');
+                chSpan.className = 'ch';
+                chSpan.textContent = ch;
+                (currentSpan || el).appendChild(chSpan);
+
+                // 仅当新字超出视口下边缘时，才向下滚动最小距离
+                const rect = chSpan.getBoundingClientRect();
+                if (rect.bottom > window.innerHeight - 40) {
+                    window.scrollBy({ top: rect.bottom - window.innerHeight + 60, behavior: 'instant' });
+                }
+
+                // 标点停顿
+                let delay = speed;
+                if ('。！？\n'.includes(ch)) delay = speed * 6;
+                else if ('，；：、'.includes(ch)) delay = speed * 3;
+
+                setTimeout(tick, delay);
+            }
+            tick();
+        }
+
+        // ── 顺序打字队列：第N段打完才开始第N+1段 ──
+        function startSequentialTyping() {
+            const SPEED = 70; // ms/字，调大数字变慢
+
+            // 所有需要打字的元素（按DOM顺序）
+            const typeTargets = Array.from(
+                document.querySelectorAll('.salutation, .para, .confession')
+            );
+            // 需要淡入的元素（分割线、署名、链接）
+            const fadeTargets = document.querySelectorAll('.divider, .signature, #nav-link');
+
+            let idx = 0;
+
+            function typeNext() {
+                if (idx >= typeTargets.length) {
+                    // 所有段落打完，淡入剩余元素
+                    fadeTargets.forEach((el, i) => {
+                        setTimeout(() => el.classList.add('visible'), i * 600 + 400);
+                    });
+                    return;
+                }
+
+                const el = typeTargets[idx++];
+
+                // 打这一段，打完后继续下一段（不再强制跳顶部，随打字自然滚动）
+                setTimeout(() => {
+                    typewriterEffect(el, SPEED, typeNext);
+                }, 200);
+            }
+
+            typeNext();
+        }
+
         startBtn.addEventListener('click', () => {
-            startScreen.style.opacity = 0;
-            setTimeout(() => { startScreen.style.display = 'none'; }, 1000);
-            
-            editor.style.display = 'block';
-            editor.appendChild(cursor);
+            startScreen.style.opacity = '0';
+            setTimeout(() => { startScreen.style.display = 'none'; }, 1200);
+
+            letterWrap.style.display = 'block';
 
             bgm.play().then(() => {
                 isPlaying = true;
-                musicBtn.style.opacity = 1;
+                musicBtn.style.opacity = '1';
                 musicBtn.classList.add('spin');
-                musicIcon.style.opacity = '1';
-            }).catch(err => {
-                console.log("播放被拦截");
+            }).catch(() => {
+                musicBtn.style.opacity = '0.4';
             });
 
-            setTimeout(typeWriter, 1000);
+            setTimeout(startSequentialTyping, 500);
         });
 
+        // 音乐控制
         musicBtn.addEventListener('click', () => {
             if (isPlaying) {
                 bgm.pause();
@@ -396,7 +531,7 @@
             }
             isPlaying = !isPlaying;
         });
-
     </script>
 </body>
+
 </html>
