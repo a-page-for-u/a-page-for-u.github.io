@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To: My Girl</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        #editor {
+            width: 100%;
+            max-width: 800px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.8;
+            font-size: 16px;
+            padding-bottom: 100px;
+            display: none;
+        }
+
+        @media screen and (max-width: 600px) {
+            body { padding: 15px; }
+            #editor { font-size: 15px; line-height: 1.6; }
+            .binary-block { font-size: 12px; }
+        }
+
+        .comment { color: #6a9955; font-style: italic; }
+        .string { color: #ce9178; }
+        .keyword { color: #c586c0; font-weight: bold; }
+        .number { color: #b5cea8; }
+        .variable { color: #9cdcfe; }
+
+        .sun { color: #ffd700; text-shadow: 0 0 8px #ffd700; font-weight: bold; }
+        .light { color: #fff; text-shadow: 0 0 10px #fff, 0 0 20px #fff; }
+        .dull { color: #808080; }
+        .passion { color: #ff9f43; font-weight: bold; }
+        .memory { color: #ff6b81; border-bottom: 1px dashed #ff6b81; }
+        .promise { color: #7bed9f; font-weight: bold; border: 1px solid #7bed9f; padding: 2px 5px; border-radius: 4px; }
+
+        .red { 
+            color: #ff6b81; 
+        }
+
+        .danger { 
+            display: inline-block;
+            background-color: #fa5151;
+            color: #ffffff;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: bold; 
+            font-size: 0.9em;
+            box-shadow: 0 4px 10px rgba(250, 81, 81, 0.3);
+            vertical-align: middle;
+            margin: 0 4px;
+            animation: pulse 2s infinite;
+            cursor: not-allowed;
+        }
+        .danger::before {
+            content: '✆ ';
+            font-size: 1.1em;
+            margin-right: 4px;
+            display: inline-block;
+            transform: rotate(135deg);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 81, 81, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(250, 81, 81, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 81, 81, 0); }
+        }
+
+        .binary-block {
+            margin-top: 20px;
+            color: #569cd6;
+            font-family: 'Courier New', monospace;
+            border-left: 3px solid #569cd6;
+            padding-left: 10px;
+            display: inline-block;
+        }
+
+        .decoded {
+            background-color: #569cd6;
+            color: #1e1e1e;
+            font-weight: bold;
+            padding: 2px 5px;
+            margin-left: 10px;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background-color: #d4d4d4;
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        #music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transition: opacity 1s;
+        }
+        
+        .spin { animation: spin 3s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        #music-icon { font-size: 20px; }
+
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1e1e1e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease-out;
+        }
+
+        #start-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background-color: transparent;
+            color: #c586c0;
+            border: 2px solid #c586c0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+            animation: pulse-border 2s infinite;
+        }
+
+        #start-btn:hover {
+            background-color: #c586c0;
+            color: #1e1e1e;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(197, 134, 192, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(197, 134, 192, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(197, 134, 192, 0); }
+        }
+        
+        .start-hint {
+            margin-top: 20px;
+            color: #808080;
+            font-size: 14px;
+        }
+
+        #nav-back {
+            display: block;
+            text-align: center;
+            margin-top: 60px;
+            padding-bottom: 80px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 1.2s ease, transform 1.2s ease;
+        }
+        #nav-back a {
+            font-size: 14px;
+            color: #808080;
+            text-decoration: none;
+            letter-spacing: 2px;
+            border-bottom: 1px dashed rgba(128,128,128,0.4);
+            padding-bottom: 2px;
+            transition: color 0.3s, border-color 0.3s;
+        }
+        #nav-back a:hover {
+            color: #c586c0;
+            border-color: rgba(197,134,192,0.5);
+        }
+        #nav-back.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" loop>
+        <source src="bgm.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="start-screen">
+        <button id="start-btn">To: 亲爱的小荷</button>
+        <div class="start-hint">戴上耳机，体验更佳</div>
+    </div>
+
+    <div id="music-control">
+        <span id="music-icon">🎵</span>
+    </div>
+
+    <div id="editor"></div>
+
+    <div id="nav-back">
+        <a href="index.html">「他又写了一封信给你」</a>
+    </div>
+
+    <script>
+        const content = [
+            { text: "To 小荷：\n\n", class: "keyword" },
+            { text: "// 思考了好久，一直不知道该如下笔。\n", class: "comment" },
+            { text: "// 用惯了AI，我已经好久好久没有自己写过东西了。\n\n", class: "comment" },
+            
+            { text: "想起来我们的相识，两个对感情如此保守的人，竟然是因为", class: "" },
+            { text: "“网络”", class: "string" },
+            { text: "将我们平行的生活交织在一起。也许，这就叫", class: "" },
+            { text: "缘分", class: "keyword" },
+            { text: "吗？\n从相知，到相识，再到相爱，我们已经一起走过了", class: "" },
+            { text: "400多天", class: "number" },
+            { text: "，我们一起从陌生变得熟悉。\n这", class: "" },
+            { text: "400多天", class: "number" },
+            { text: "，我们竟没有过冲突和争执，有时我都在怀疑，是我们太过契合还是你太过包容。\n你总是像", class: "" },
+            { text: "小太阳", class: "sun" },
+            { text: "一样，想温暖身边所有的人，但是别忘了，", class: "" },
+            { text: "自己才是人生中的第一位，要学着自私一点", class: "keyword" },
+            { text: "。\n\n", class: "" },
+
+            { text: "你说，要", class: "" },
+            { text: "“从一段告白和一束鲜花开始”", class: "string" },
+            { text: "。那么，现在就是迟来的告白。\n不知道你还记不记得，", class: "" },
+            { text: "“你的出现就像一束光照进了我的生活”", class: "light" },
+            { text: "，我说过类似的话。\n遇见你之前，我就重复着", class: "" },
+            { text: "两点一线或者是三点一线的生活", class: "dull" },
+            { text: "，好像也不觉得有什么问题。\n随着开始实习，开始闲下来之后，突然觉得有些空虚，下班的时间每天就是在床上摊着，或者局限在十平米的房间，之前买的油盐酱醋没用几次就不了了之，仿佛丧失了对生活的热情，", class: "dull" },
+            { text: "直到我遇见了你", class: "variable" },
+            { text: "。\n那是我第一次见到了这样的说话方式和语气，聊天不再是平淡的交换信息，而是充满了", class: "" },
+            { text: "热情", class: "passion" },
+            { text: "和", class: "" },
+            { text: "活力", class: "passion" },
+            { text: "。\n随着一段时间的熟悉，我渐渐开始期待着手机的震动，那是不是你的消息。\n再然后开始留意身边的大事小事，想办法突破一下单调的生活，来得到和你聊天的契机。\n随着聊天的深入，发现了和你有如此多相似的意见，相契合的想法，接着就是更深入的接触，就是", class: "" },
+            { text: "公交站牌边的第一次牵手", class: "memory" },
+            { text: "，就是", class: "" },
+            { text: "停电时扑通扑通的拥抱", class: "memory" },
+            { text: "，就是", class: "" },
+            { text: "海边礁石上的第一次吻", class: "memory" },
+            { text: "。\n你的出现，让我的生活有了期待，有了色彩，让我知道世界上还有一个和我息息相关的人。\n曾经的我无法想象，每天只有二十四小时，还要抽出一小时做一些看似无意义的事情，但是到如今为止的", class: "" },
+            { text: "200多天", class: "number" },
+            { text: "，我每次都不想先点那个", class: "" },
+            { text: "红色的按钮", class: "red" },
+            { text: "", class: "danger" }, 
+            { text: "。\n\n", class: "" },
+
+            { text: "你说", class: "" },
+            { text: "100天", class: "number" },
+            { text: "太慢，我说", class: "" },
+            { text: "200天", class: "number" },
+            { text: "太快，快到再有", class: "" },
+            { text: "200天", class: "number" },
+            { text: "你就要因为一个曾经的陌生人而改变一生的轨迹。\n对于未来的不确定性总是让人焦虑，我也不知道你究竟要鼓起多大的勇气才能来做这个决定，但是你记得吗，你说要跟一个本身就很好的人谈恋爱，我相信", class: "" },
+            { text: "我就是那个本身就很好的人", class: "variable" },
+            { text: "，也希望你能够相信。\n虽然嘴上的承诺很简单，但是我也没法给你足够的保证，不过无论遇到什么问题，", class: "" },
+            { text: "别急，还有我在", class: "promise" },
+            { text: "。这次的别急不是坏事了吧。\n\n", class: "" },
+
+            { text: "不知不觉就写了这么多了，你说，写多了就不显得重视了，那我到这就不写啦，因为，", class: "" },
+            { text: "在可预见的将来，你一直是我最重视的那个人。", class: "keyword" },
+            { text: "\n\n", class: "" },
+
+            { text: "01001001 00100000 01101100 01101111 01110110 01100101 00100000 01111001 01101111 01110101 00101100 00100000 01001000", class: "binary-block" }
+        ];
+
+        const signature = [
+            { text: "\n\n", class: "" },
+            { text: "2026.1.23\n", class: "number" },
+            { text: "🦐 虾米", class: "string" }
+        ];
+
+        const editor = document.getElementById('editor');
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        
+        let blockIndex = 0;
+        let charIndex = 0;
+        let currentSpan = null;
+
+        function typeWriter() {
+            if (blockIndex < content.length) {
+                const block = content[blockIndex];
+                
+                if (!currentSpan) {
+                    currentSpan = document.createElement('span');
+                    currentSpan.className = block.class;
+                    editor.insertBefore(currentSpan, cursor);
+                }
+
+                if (charIndex < block.text.length) {
+                    currentSpan.textContent += block.text.charAt(charIndex);
+                    charIndex++;
+                    
+                    let delay = Math.random() * 30 + 20; 
+                    const char = block.text.charAt(charIndex - 1);
+                    if (char === '，') delay += 100;
+                    if (char === '。' || char === '\n') delay += 200;
+                    
+                    setTimeout(typeWriter, delay);
+                    window.scrollTo(0, document.body.scrollHeight);
+                } else {
+                    blockIndex++;
+                    charIndex = 0;
+                    currentSpan = null;
+                    setTimeout(typeWriter, 50);
+                }
+            } else {
+                decodeBinary();
+            }
+        }
+
+        function decodeBinary() {
+            const binaryElements = document.getElementsByClassName('binary-block');
+            if (binaryElements.length > 0) {
+                const binaryEl = binaryElements[0];
+                const decodedSpan = document.createElement('span');
+                decodedSpan.className = 'decoded';
+                decodedSpan.textContent = "=> I love you, H";
+                
+                if (binaryEl.nextSibling) {
+                    binaryEl.parentNode.insertBefore(decodedSpan, binaryEl.nextSibling);
+                } else {
+                    binaryEl.parentNode.appendChild(decodedSpan);
+                }
+                
+                setTimeout(() => {
+                    decodedSpan.style.opacity = 1;
+
+                    setTimeout(() => {
+                        startSignature();
+                    }, 500); 
+                    
+                }, 1500);
+            }
+        }
+
+        let sigBlockIndex = 0;
+        let sigCharIndex = 0;
+        let sigCurrentSpan = null;
+
+        function startSignature() {
+            if (sigBlockIndex < signature.length) {
+                const block = signature[sigBlockIndex];
+                
+                if (!sigCurrentSpan) {
+                    sigCurrentSpan = document.createElement('span');
+                    sigCurrentSpan.className = block.class;
+                    editor.insertBefore(sigCurrentSpan, cursor);
+                }
+
+                if (sigCharIndex < block.text.length) {
+                    sigCurrentSpan.textContent += block.text.charAt(sigCharIndex);
+                    sigCharIndex++;
+                    setTimeout(startSignature, 50);
+                    window.scrollTo(0, document.body.scrollHeight);
+                } else {
+                    sigBlockIndex++;
+                    sigCharIndex = 0;
+                    sigCurrentSpan = null;
+                    setTimeout(startSignature, 50);
+                }
+            } else {
+                // 全部打字完成，淡入返回链接
+                setTimeout(() => {
+                    const navBack = document.getElementById('nav-back');
+                    if (navBack) navBack.classList.add('show');
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }, 800);
+            }
+        }
+
+        const bgm = document.getElementById('bgm');
+        const musicBtn = document.getElementById('music-control');
+        const musicIcon = document.getElementById('music-icon');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        let isPlaying = false;
+
+        startBtn.addEventListener('click', () => {
+            startScreen.style.opacity = 0;
+            setTimeout(() => { startScreen.style.display = 'none'; }, 1000);
+            
+            editor.style.display = 'block';
+            editor.appendChild(cursor);
+
+            bgm.play().then(() => {
+                isPlaying = true;
+                musicBtn.style.opacity = 1;
+                musicBtn.classList.add('spin');
+                musicIcon.style.opacity = '1';
+            }).catch(err => {
+                console.log("播放被拦截");
+            });
+
+            setTimeout(typeWriter, 1000);
+        });
+
+        musicBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                bgm.pause();
+                musicBtn.classList.remove('spin');
+                musicIcon.style.opacity = '0.5';
+            } else {
+                bgm.play();
+                musicBtn.classList.add('spin');
+                musicIcon.style.opacity = '1';
+            }
+            isPlaying = !isPlaying;
+        });
+
+    </script>
+</body>
+</html>
